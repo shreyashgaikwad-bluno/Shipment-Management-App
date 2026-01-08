@@ -2,6 +2,7 @@ package com.example.shipment_management.Service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+
 import com.example.shipment_management.AuthUtil;
 import com.example.shipment_management.DTO.AuthResponse;
 import com.example.shipment_management.DTO.LoginRequest;
@@ -12,12 +13,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class Authservice {
     private final UserRepository userRepository;
+    private final AuthUtil authutil;
 
     public ResponseEntity<?> register(RegisterRequest req){
         User user=userRepository.findByEmail(req.email);
@@ -28,7 +28,7 @@ public class Authservice {
             User tempuser=new User();
             tempuser.setName(req.name);
             tempuser.setEmail(req.email);
-            tempuser.setPassword(AuthUtil.hash(req.getPassword()));
+            tempuser.setPassword(authutil.hash(req.getPassword()));
             tempuser.setIsAdmin(false);
 
             userRepository.save(tempuser);
@@ -37,9 +37,9 @@ public class Authservice {
     }
 
     public ResponseEntity<?> login(LoginRequest req){
-        if(AuthUtil.isAdminCredentials(req.email,req.password)){
-            String token=AuthUtil.generateToken(0L,true);
-            AuthResponse resp=new AuthResponse(0L,AuthUtil.ADMIN_EMAIL,token,true);
+        if(authutil.isAdminCredentials(req.email,req.password)){
+            String token=authutil.generateToken(0L,true);
+            AuthResponse resp=new AuthResponse(0L,authutil.ADMIN_EMAIL,token,true);
             return ResponseEntity.status(200).body(resp);
         }
         else{
@@ -47,29 +47,32 @@ public class Authservice {
             if(user==null){
                 return ResponseEntity.status(403).body("User Not Registered....");
             }
-            if(!AuthUtil.verify(req.password,user.getPassword())){
+            if(!authutil.verify(req.password,user.getPassword())){
                 return ResponseEntity.status(403).body("Password Incorrect");
             }
-            String token=AuthUtil.generateToken(user.getId(),false);
+            String token=authutil.generateToken(user.getId(),false);
             AuthResponse resp=new AuthResponse(user.getId(),user.getEmail(),token,false);
             return ResponseEntity.status(200).body(resp);
         }
     }
-
-    public ResponseEntity<?> me(String header){
-        if(header==null ){
-            return ResponseEntity.status(403).body("Token missing in header...");
+    public ResponseEntity<?> me(String token) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(403).body("Token missing");
         }
-        if(!header.startsWith("Bearer ")){
-            return ResponseEntity.status(403).body("Token not start with bearer...");
+        if (!authutil.validateToken(token)) {
+            return ResponseEntity.status(403).body("Expired token");
         }
-        //taken from chatgpt
-        String token = header.substring(7);
         DecodedJWT jwt = JWT.decode(token);
         Boolean isAdmin = jwt.getClaim("isAdmin").asBoolean();
-
-        if(isAdmin){
-            return ResponseEntity.status(200).body(new AuthResponse(0L,AuthUtil.ADMIN_EMAIL,header,true));
+        if (isAdmin != null && isAdmin) {
+            return ResponseEntity.ok(
+                    new AuthResponse(
+                            0L,
+                            authutil.ADMIN_EMAIL,
+                            token,
+                            true
+                    )
+            );
         }
         Long userId = jwt.getClaim("userId").asLong();
         User user = userRepository.findById(userId).orElse(null);
@@ -77,11 +80,16 @@ public class Authservice {
             return ResponseEntity.status(404).body("User not found");
         }
         return ResponseEntity.ok(
-                new AuthResponse(user.getId(),user.getEmail(),header, false)
+                new AuthResponse(
+                        user.getId(),
+                        user.getEmail(),
+                        token,
+                        false
+                )
         );
     }
 
-//    public ResponseEntity<?> getall() {
-//
-//    }
+
+
+
 }

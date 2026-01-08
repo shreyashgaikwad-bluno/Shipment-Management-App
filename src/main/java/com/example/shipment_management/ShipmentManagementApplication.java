@@ -12,8 +12,6 @@ public class ShipmentManagementApplication {
 	public static void main(String[] args) {
 
 		SpringApplication.run(ShipmentManagementApplication.class, args);
-		
-
 	}
 
 }

@@ -1,6 +1,5 @@
 package com.example.shipment_management.Repository;
 
-import com.example.shipment_management.DTO.RegisterRequest;
 import com.example.shipment_management.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 

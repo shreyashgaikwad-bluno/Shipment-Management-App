@@ -1,48 +1,74 @@
 package com.example.shipment_management;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
+@Component
 public class AuthUtil {
 
-    // ===== SINGLE ADMIN CONFIG =====
-    public static final String ADMIN_NAME = "System Admin";
-    public static final String ADMIN_EMAIL = "admin@system.com";
+    @Value("${admin.name}")
+    public String ADMIN_NAME;
 
-    // password = admin123 (hash generated ONCE)
-    private static final String ADMIN_PASSWORD_HASH =
-            "$2a$12$REPLACE_WITH_REAL_HASH";
+    @Value("${admin.email}")
+    public String ADMIN_EMAIL;
 
-    // ===== JWT CONFIG =====
-    private static final String SECRET =
-            "sahfeigjaeeageaieaguehagrha4wfr4wq74325y4wuhfea";
-    private static final long EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
-    private static final Algorithm algorithm = Algorithm.HMAC256(SECRET);
+    @Value("${admin.password.hash}")
+    private String ADMIN_PASSWORD_HASH;
 
-    // ===== PASSWORD UTILS =====
-    public static String hash(String password) {
+    @Value("${jwt.secret}")
+    private String SECRET;
+
+    @Value("${jwt.expiry}")
+    private long EXPIRY;
+
+    public String hash(String password) {
         return BCrypt.hashpw(password, BCrypt.gensalt(12));
     }
 
-    public static boolean verify(String rawPassword, String hashedPassword) {
+    public boolean verify(String rawPassword, String hashedPassword) {
         return BCrypt.checkpw(rawPassword, hashedPassword);
     }
 
-    // ===== ADMIN CHECK =====
-    public static boolean isAdminCredentials(String email, String password) {
+    public boolean isAdminCredentials(String email, String password) {
         return ADMIN_EMAIL.equals(email)
                 && BCrypt.checkpw(password, ADMIN_PASSWORD_HASH);
     }
 
-    // ===== JWT =====
-    public static String generateToken(Long userId, boolean isAdmin) {
+    public String generateToken(Long userId, boolean isAdmin) {
+        Algorithm algorithm = Algorithm.HMAC256(SECRET);
+
         return JWT.create()
                 .withClaim("userId", userId)
                 .withClaim("isAdmin", isAdmin)
                 .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRY))
                 .sign(algorithm);
     }
+
+    public boolean validateToken(String token) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(SECRET);
+            JWTVerifier verifier = JWT.require(algorithm).build();
+            verifier.verify(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public Long extractUserId(String token) {
+        Algorithm algorithm = Algorithm.HMAC256(SECRET);
+        return JWT.require(algorithm)
+                .build()
+
+                .verify(token)
+                .getClaim("userId")
+                .asLong();
+    }
+
 }
