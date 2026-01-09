@@ -73,7 +73,6 @@ public class UserDocumentController {
         if (!authutil.validateToken(token)) {
             return ResponseEntity.status(403).body("Invalid token");
         }
-
         Long userId = authutil.extractUserId(token);
         return userDocumentService.deleteDocument(userId, docId);
     }

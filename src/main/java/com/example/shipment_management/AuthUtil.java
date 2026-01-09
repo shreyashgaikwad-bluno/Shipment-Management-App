@@ -71,4 +71,18 @@ public class AuthUtil {
                 .asLong();
     }
 
+    public boolean isAdmin(String token) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(SECRET);
+            return JWT.require(algorithm)
+                    .build()
+                    .verify(token)
+                    .getClaim("isAdmin")
+                    .asBoolean();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+
 }

@@ -28,10 +28,4 @@ public class AuthController {
         return authservice.me(authHeader);
     }
 
-//    @GetMapping("/getall")
-//    public ResponseEntity<?> getall(){
-//        return authservice.getall();
-//    }
-
-
 }
