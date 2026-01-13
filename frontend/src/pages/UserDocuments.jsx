@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Card, Input, Button, Space, Typography, Divider, List, Tag } from "antd";
 import api from "../api";
+const { Title, Text } = Typography;
 
 export default function UserDocuments() {
   const { shipmentId } = useParams();
@@ -29,6 +31,11 @@ export default function UserDocuments() {
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   const handleUpload = async () => {
     if (!form.docType || !form.fileUrl) {
@@ -37,11 +44,7 @@ export default function UserDocuments() {
     }
 
     try {
-      await api.post(`/user/shipments/${shipmentId}/documents`, {
-        docType: form.docType,
-        fileUrl: form.fileUrl,
-      });
-
+      await api.post(`/user/shipments/${shipmentId}/documents`, form);
       alert("Document uploaded");
       setForm({ docType: "", fileUrl: "" });
       fetchDocs();
@@ -65,75 +68,80 @@ export default function UserDocuments() {
   };
 
   return (
-    <div>
-      <h2>Documents for Shipment {shipmentId}</h2>
+    <div style={{ display: "flex", justifyContent: "center", marginTop: 40 }}>
+      <Card style={{ width: 600 }}>
+        <Title level={3}>Documents for Shipment {shipmentId}</Title>
 
-      <h3>Upload Document</h3>
+        <Divider />
 
-      <input
-        name="docType"
-        placeholder="Document Type (Invoice, Passport...)"
-        value={form.docType}
-        onChange={handleChange}
-      />
+        <Title level={4}>Upload Document</Title>
 
-      <br />
+        <Space orientation="vertical" style={{ width: "100%" }}>
+          <Input
+            name="docType"
+            placeholder="Document Type (Invoice, Passport...)"
+            value={form.docType}
+            onChange={handleChange}
+          />
 
-      <input
-        name="fileUrl"
-        placeholder="File URL"
-        value={form.fileUrl}
-        onChange={handleChange}
-      />
+          <Input
+            name="fileUrl"
+            placeholder="File URL"
+            value={form.fileUrl}
+            onChange={handleChange}
+          />
 
-      <br />
+          <Button type="primary" onClick={handleUpload}>
+            Upload
+          </Button>
+        </Space>
 
-      <button onClick={handleUpload}>Upload</button>
+        <Divider />
 
-      <hr />
+        <Title level={4}>Uploaded Documents</Title>
 
-      <h3>Uploaded Documents</h3>
+        {documents.length === 0 && <Text>No documents found</Text>}
 
-      {documents.length === 0 && <p>No documents found</p>}
+        <List
+          dataSource={documents}
+          renderItem={(d) => (
+            <List.Item
+              actions={[
+                <Button
+                  onClick={() =>
+                    navigate(`/user/shipments/${shipmentId}/documents/${d.id}`)
+                  }
+                >
+                  View
+                </Button>,
+                <Button danger onClick={() => handleDelete(d.id)}>
+                  Delete
+                </Button>,
+              ]}
+            >
+              <List.Item.Meta
+                title={`Document ID: ${d.id}`}
+                description={
+                  <>
+                    <Text>Type: {d.doctype}</Text>
+                    <br />
+                    <Text>Status: </Text>
+                    {/* <Tag color="blue">{d.status}</Tag> */}
+                    <Tag color={ d.status==="VERIFIED" ? "green" : d.status==="REJECTED" ? "red" : "blue"}>{d.status} </Tag>
+                    <br />
+                    <Text>Notes: {d.notes || "No notes yet"}</Text>
+                  </>
+                }
+              />
+            </List.Item>
+          )}
+        />
 
-      {documents.map((d) => (
-        <div
-          key={d.id}
-          style={{
-            border: "1px solid black",
-            margin: 10,
-            padding: 10,
-          }}
-        >
-          <p><b>ID:</b> {d.id}</p>
-          <p><b>Type:</b> {d.docType}</p>
-          <p><b>Status:</b> {d.verificationStatus}</p>
-          <p><b>Notes:</b> {d.notes || "No notes yet"}</p>
-
-          <button
-            onClick={() =>
-              navigate(`/user/shipments/${shipmentId}/documents/${d.id}`)
-            }
-          >
-            View
-          </button>
-
-          <button
-            onClick={() => handleDelete(d.id)}
-            style={{
-              marginLeft: 10,
-              backgroundColor: "red",
-              color: "white",
-            }}
-          >
-            Delete
-          </button>
-        </div>
-      ))}
-
-      <br />
-
-      <button onClick={() => navigate(-1)}>Back</button>
+        <Divider />
+          
+        <Button onClick={() => navigate(-1)}>Back</Button>
+        <Button danger onClick={handleLogout}>Logout</Button>
+      </Card>
     </div>
   );
 }

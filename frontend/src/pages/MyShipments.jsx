@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import api from "../api";
 import { useNavigate } from "react-router-dom";
+import { Card, Button, Space, Typography, Popconfirm, Empty,Tag } from "antd";
+import api from "../api";
+const { Title, Text } = Typography;
 
 export default function MyShipments() {
   const [shipments, setShipments] = useState([]);
   const navigate = useNavigate();
-
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
   useEffect(() => {
     fetchShipments();
   }, []);
@@ -20,8 +26,6 @@ export default function MyShipments() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this shipment?")) return;
-
     try {
       await api.delete(`/user/shipments/${id}`);
       alert("Shipment deleted");
@@ -40,34 +44,66 @@ export default function MyShipments() {
   };
 
   return (
-    <div>
-      <h2>My Shipments</h2>
+    <div style={{ padding: 24 }}>
+      <Title level={2}>My Shipments</Title>
 
-      {shipments.length === 0 && <p>No shipments found</p>}
+      {shipments.length === 0 && <Empty description="No shipments found" />}
 
-      {shipments.map((s) => (
-        <div
-          key={s.id}
-          style={{
-            border: "1px solid black",
-            margin: 10,
-            padding: 10,
-          }}
-        >
-          <p><b>ID:</b> {s.id}</p>
-          <p><b>Origin:</b> {s.originCountry}</p>
-          <p><b>Destination:</b> {s.destinationCountry}</p>
-          <p><b>Status:</b> {s.status}</p>
+      <Space orientation="vertical" size="large" style={{ width: "100%" }}>
+        {shipments.map((s) => (
+          <Card key={s.id} style={{ width: "100%" }}>
+            <Space orientation="vertical">
+              <Text><b>ID:</b> {s.id}</Text>
+              <Text><b>Origin:</b> {s.originCountry}</Text>
+              <Text><b>Destination:</b> {s.destinationCountry}</Text>
+              <Text><b>Status:</b> <Tag
+              color={
+                s.status==="PENDING" ? "orange" 
+                :s.status==="APPROVED" ? "green" 
+                :"red"
+              }>
+                {s.status}
+              </Tag>
+              </Text>
+              {/* <Text>
+              <b>Status:</b>{" "}
+              <Tag
+                color={
+                  d.verificationStatus === "PENDING"
+                    ? "orange"
+                    : d.verificationStatus === "VERIFIED"
+                    ? "green"
+                    : "red"
+                }
+              >
+                {d.verificationStatus || "PENDING"}
+              </Tag>
+            </Text> */}
+              <Space>
+                <Button type="primary" onClick={() => handleUpdate(s.id)}>
+                  Update
+                </Button>
 
-          <div style={{ marginTop: 10 }}>
-            <button onClick={() => handleUpdate(s.id)}>Update</button>
-            <button onClick={() => handleDelete(s.id)}>Delete</button>
-            <button onClick={() => handleDocuments(s.id)}>Documents</button>
-          </div>
-        </div>
-      ))}
+                <Popconfirm
+                  title="Are you sure you want to delete this shipment?"
+                  onConfirm={() => handleDelete(s.id)}
+                >
+                  <Button danger>Delete</Button>
+                </Popconfirm>
 
-      <button onClick={() => navigate(-1)}>Back</button>
+                <Button onClick={() => handleDocuments(s.id)}>
+                  Documents
+                </Button>
+              </Space>
+            </Space>
+          </Card>
+        ))}
+      </Space>
+
+      <br />
+       
+      <Button onClick={() => navigate(-1)}>Back</Button>
+       <Button danger onClick={handleLogout}>Logout</Button>
     </div>
   );
 }

@@ -1,0 +1,19 @@
+.class1{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.class2{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    
+}
+.card1{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+}

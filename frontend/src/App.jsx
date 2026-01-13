@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import "antd/dist/reset.css";
 
 import Welcome from "./pages/Welcome";
@@ -19,7 +18,9 @@ import UserDocument from "./pages/UserDocument";
 import EditShipment from "./pages/EditShipment";
 
 export default function App() {
-  const { token, user } = useSelector((state) => state.auth);
+  const token = localStorage.getItem("token");
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
 
   const isAuth = !!token;
   const isAdmin = user?.isAdmin;
@@ -30,7 +31,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
 
-      
+      {/* ADMIN ROUTES */}
       <Route
         path="/admin/dashboard"
         element={
@@ -56,6 +57,7 @@ export default function App() {
         }
       />
 
+      {/* USER ROUTES */}
       <Route
         path="/user/dashboard"
         element={
@@ -74,7 +76,6 @@ export default function App() {
           isAuth && !isAdmin ? <MyShipments /> : <Navigate to="/login" />
         }
       />
-      
       <Route
         path="/user/shipments/:id/edit"
         element={

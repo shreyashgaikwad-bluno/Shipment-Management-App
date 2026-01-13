@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Card, Button, Typography, Space, Tag } from "antd";
 import api from "../api";
 
+const { Title, Text } = Typography;
+
 export default function AdminShipments() {
-  const { status } = useParams(); // all | PENDING | APPROVED | REJECTED
+  const { status } = useParams(); 
   const navigate = useNavigate();
   const [shipments, setShipments] = useState([]);
-
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
   useEffect(() => {
     fetchShipments();
   }, [status]);
@@ -34,7 +41,6 @@ export default function AdminShipments() {
 
       alert(approved ? "Shipment Approved" : "Shipment Rejected");
 
-      // Refresh list but DO NOT remove buttons
       fetchShipments();
     } catch (err) {
       console.error(err);
@@ -43,51 +49,61 @@ export default function AdminShipments() {
   };
 
   return (
-    <div>
-      <h2>
+    <div style={{ padding: 30 }}>
+      <Title level={3}>
         {status === "all" ? "All Shipments" : `${status} Shipments`}
-      </h2>
+      </Title>
 
-      {shipments.map((s) => (
-        <div
-          key={s.id}
-          style={{
-            border: "1px solid black",
-            padding: 10,
-            margin: 10,
-          }}
-        >
-          <p><b>ID:</b> {s.id}</p>
-          <p><b>Origin:</b> {s.originCountry}</p>
-          <p><b>Destination:</b> {s.destinationCountry}</p>
-          <p><b>Status:</b> {s.status}</p>
+      <Space orientation="vertical" style={{ width: "100%" }} size="large">
+        {shipments.map((s) => (
+          <Card key={s.id}>
+            <Text><b>ID:</b> {s.id}</Text><br />
+            <Text><b>Origin:</b> {s.originCountry}</Text><br />
+            <Text><b>Destination:</b> {s.destinationCountry}</Text><br />
+            <Text>
+              <b>Status:</b>{" "}
+              <Tag
+                color={
+                  s.status === "PENDING"
+                    ? "orange"
+                    : s.status === "APPROVED"
+                    ? "green"
+                    : "red"
+                }
+              >
+                {s.status}
+              </Tag>
+            </Text>
 
-          <button
-            onClick={() =>
-              navigate(`/admin/shipments/${s.id}/documents`)
-            }
-          >
-            View Documents
-          </button>
+            <br /><br />
 
-          {/* ALWAYS show buttons */}
-          <button
-            onClick={() => updateStatus(s.id, true)}
-            style={{ marginLeft: 10 }}
-          >
-            Verify
-          </button>
+            <Space>
+              <Button onClick={() => navigate(`/admin/shipments/${s.id}/documents`)}>
+                View Documents
+              </Button>
 
-          <button
-            onClick={() => updateStatus(s.id, false)}
-            style={{ marginLeft: 10 }}
-          >
-            Reject
-          </button>
-        </div>
-      ))}
+              <Button
+                type="primary"
+                onClick={() => updateStatus(s.id, true)}
+              >
+                Verify
+              </Button>
 
-      <button onClick={() => navigate(-1)}>Back</button>
+              <Button
+                danger
+                onClick={() => updateStatus(s.id, false)}
+              >
+                Reject
+              </Button>
+            </Space>
+          </Card>
+        ))}
+      </Space>
+
+      <br />
+        
+      <Button onClick={() => navigate(-1)}>Back</Button>
+      <Button danger onClick={handleLogout}>Logout</Button>
     </div>
   );
 }

@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Card, Typography, Input, Space, Button, Tag } from "antd";
 import api from "../api";
+
+const { Title, Text } = Typography;
+const { TextArea } = Input;
 
 export default function AdminReviewDoc() {
   const { shipmentId, docId } = useParams();
   const navigate = useNavigate();
-
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
   const [doc, setDoc] = useState(null);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,35 +55,55 @@ export default function AdminReviewDoc() {
     }
   };
 
-  if (loading) return <h3>Loading...</h3>;
+  if (loading) return <Title level={4}>Loading...</Title>;
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Review Document</h2>
+    <div style={{ padding: 30, display: "flex", justifyContent: "center" }}>
+      <Card style={{ width: 500 }}>
+        <Title level={3}>Review Document</Title>
 
-      {doc && (
-        <>
-          <p><b>ID:</b> {doc.id}</p>
-          <p><b>Type:</b> {doc.docType}</p>
-          <p><b>Status:</b> {doc.verificationStatus}</p>
+        {doc && (
+          <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
+            <Text><b>ID:</b> {doc.id}</Text>
+            <Text><b>Type:</b> {doc.docType}</Text>
+            <Text><b>File URL:</b> {doc.fileUrl}</Text>
+            <Text>
+              <b>Status:</b>{" "}
+              <Tag
+                color={
+                  doc.verificationStatus === "PENDING"
+                    ? "orange"
+                    : doc.verificationStatus === "VERIFIED"
+                    ? "green"
+                    : "red"
+                }
+              >
+                {doc.verificationStatus}
+              </Tag>
+            </Text>
 
-          <br />
+            <TextArea
+              placeholder="Enter notes..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={4}
+            />
 
-          <textarea
-            placeholder="Enter notes..."
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={5}
-            cols={40}
-          />
+            <Space>
+              <Button type="primary" onClick={() => handleAction(true)}>
+                Verify
+              </Button>
 
-          <br /><br />
-
-          <button onClick={() => handleAction(true)}>Verify</button>
-          <button onClick={() => handleAction(false)}>Reject</button>
-          <button onClick={() => navigate(-1)}>Back</button>
-        </>
-      )}
+              <Button danger onClick={() => handleAction(false)}>
+                Reject
+              </Button>
+                
+              <Button onClick={() => navigate(-1)}>Back</Button>
+              <Button danger onClick={handleLogout}>Logout</Button>
+            </Space>
+          </Space>
+        )}
+      </Card>
     </div>
   );
 }

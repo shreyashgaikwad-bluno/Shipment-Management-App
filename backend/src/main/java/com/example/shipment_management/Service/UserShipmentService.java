@@ -1,6 +1,7 @@
 package com.example.shipment_management.Service;
 
 import com.example.shipment_management.DTO.ShipmentRequest;
+import com.example.shipment_management.Repository.ShipmentDocumentRepository;
 import com.example.shipment_management.Repository.ShipmentRepository;
 import com.example.shipment_management.Repository.UserRepository;
 import com.example.shipment_management.enums.ShipmentStatus;
@@ -17,7 +18,7 @@ import java.util.List;
 public class UserShipmentService {
     private final ShipmentRepository shipmentRepository;
     private final UserRepository userRepository;
-
+    private final ShipmentDocumentRepository shipmentDocumentRepository;
 
     public ResponseEntity<?> createShipment(Long userid, ShipmentRequest req) {
         User user=userRepository.findById(userid).orElse(null);
@@ -63,9 +64,7 @@ public class UserShipmentService {
             return ResponseEntity.status(403).body("Unauthorized");
         }
 
-        if (shipment.getStatus() != ShipmentStatus.PENDING) {
-            return ResponseEntity.badRequest().body("Only PENDING shipments can be updated");
-        }
+
 
         shipment.setOriginCountry(req.getOriginCountry());
         shipment.setDestinationCountry(req.getDestinationCountry());
@@ -85,11 +84,9 @@ public class UserShipmentService {
             return ResponseEntity.status(403).body("Unauthorized");
         }
 
-        if (shipment.getStatus() != ShipmentStatus.PENDING) {
-            return ResponseEntity.badRequest().body("Only PENDING shipments can be deleted");
-        }
 
-        shipmentRepository.delete(shipment);
+        shipmentDocumentRepository.deleteByShipmentId(shipmentid);
+        shipmentRepository.deleteById(shipmentid);
         return ResponseEntity.ok("Deleted successfully");
     }
 }

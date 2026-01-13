@@ -1,15 +1,22 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Card, Input, Button, Space, Typography } from "antd";
 import api from "../api";
+const { Title, Text } = Typography;
 
 export default function EditShipment() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    originCity: "",
+    originCountry: "",
     destinationCountry: "",
   });
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   useEffect(() => {
     fetchShipment();
@@ -22,7 +29,6 @@ export default function EditShipment() {
     } catch (err) {
       alert("Failed to fetch shipment");
     }
-
   };
 
   const handleChange = (e) => {
@@ -40,30 +46,43 @@ export default function EditShipment() {
   };
 
   return (
-    <div>
-      <h2>Edit Shipment</h2>
-        <b>Origin Country : </b>
-      <input
-        name="originCountry"
-        value={form.originCountry}
-        onChange={handleChange}
-        placeholder="Origin Country"
-      />
-      <br />
-      <br />
-    <b>Destination Country : </b>
-      <input
-        name="destinationCountry"
-        value={form.destinationCountry}
-        onChange={handleChange}
-        placeholder="Destination Country"
-      />
+    <div style={{ display: "flex", justifyContent: "center", marginTop: 50 }}>
+      <Card style={{ width: 400 }}>
+        <Title level={3}>Edit Shipment</Title>
 
-      <br />
-        <br />
-      <button onClick={handleSubmit}>Update</button>
-      
-      <button onClick={() => navigate(-1)}>Back</button>
+        <Space orientation="vertical" style={{ width: "100%" }} size="middle">
+          <div>
+            <Text strong>Origin Country</Text>
+            <Input
+              name="originCountry"
+              value={form.originCountry}
+              onChange={handleChange}
+              placeholder="Origin Country"
+            />
+          </div>
+
+          <div>
+            <Text strong>Destination Country</Text>
+            <Input
+              name="destinationCountry"
+              value={form.destinationCountry}
+              onChange={handleChange}
+              placeholder="Destination Country"
+            />
+          </div>
+
+          <Space>
+            <Button type="primary" onClick={handleSubmit}>
+              Update
+            </Button>
+
+            <Button onClick={() => navigate(-1)}>
+              Back
+            </Button>
+            <Button danger onClick={handleLogout}>Logout</Button>
+          </Space>
+        </Space>
+      </Card>
     </div>
   );
 }
